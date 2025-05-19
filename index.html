@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube Client Manager 🎬</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #111;
+      color: #fff;
+    }
+
+    header {
+      background: #e62117;
+      padding: 20px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 5px 20px rgba(255, 0, 0, 0.4);
+    }
+
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .box {
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    input, button {
+      padding: 12px 15px;
+      border-radius: 5px;
+      border: none;
+      font-size: 1rem;
+      margin-right: 10px;
+    }
+
+    input {
+      width: 60%;
+      background: #333;
+      color: #fff;
+    }
+
+    button {
+      background: #e62117;
+      color: white;
+      cursor: pointer;
+    }
+
+    #searchSection {
+      display: none;
+      margin-bottom: 30px;
+    }
+
+    #results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .video-card {
+      background: #222;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+
+    .video-card:hover {
+      transform: scale(1.02);
+    }
+
+    .video-card img {
+      width: 100%;
+      display: block;
+    }
+
+    .video-title {
+      padding: 10px;
+      font-size: 1rem;
+    }
+
+    #player {
+      width: 100%;
+      height: 500px;
+      margin-top: 20px;
+      border-radius: 10px;
+      border: none;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<header>YouTube Client Manager 🎬</header>
+
+<main>
+
+  <div id="apiSection" class="box">
+    <h2>🎯 Inserisci la tua API Key YouTube</h2>
+    <p>Per usare questa applicazione, devi creare un API. Se non sai come fare, segui questa guida su un Repository GITHUB.  <a href="https://github.com/theyaredeveloper/YouTubeClientVideo" target="_blank" style="color: #e62117;">https://github.com/theyaredeveloper/YouTubeClientVideo</a>.</p> Dopo inserisci l'API Key nello slot.
+    
+    <input type="text" id="apiKeyInput" placeholder="Incolla qui la tua API Key...">
+    <button onclick="salvaAPIKey()">Avvia</button>
+  </div>
+
+  <div id="searchSection" class="box">
+    <input type="text" id="query" placeholder="Cerca video YouTube...">
+    <button onclick="cercaVideo()">Cerca</button>
+  </div>
+
+  <iframe id="player" allowfullscreen allow="autoplay; encrypted-media"></iframe>
+
+  <div id="results"></div>
+
+</main>
+
+<script>
+  let API_KEY = "";
+
+  function salvaAPIKey() {
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (!key) {
+      alert("Inserisci una chiave valida.");
+      return;
+    }
+    API_KEY = key;
+    document.getElementById('apiSection').style.display = 'none';
+    document.getElementById('searchSection').style.display = 'block';
+  }
+
+  async function cercaVideo() {
+    const query = document.getElementById('query').value.trim();
+    if (!query || !API_KEY) return;
+
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = "<p>🔍 Caricamento in corso...</p>";
+    document.getElementById('player').style.display = "none";
+
+    try {
+      const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=9&q=${encodeURIComponent(query)}&key=${API_KEY}`);
+      const data = await res.json();
+      if (!data.items) {
+        resultsDiv.innerHTML = "<p>❌ Nessun video trovato.</p>";
+        return;
+      }
+
+      resultsDiv.innerHTML = "";
+      data.items.forEach(item => {
+        const videoId = item.id.videoId;
+        const title = item.snippet.title;
+        const thumb = item.snippet.thumbnails.high.url;
+
+        const card = document.createElement('div');
+        card.className = 'video-card';
+        card.innerHTML = `
+          <img src="${thumb}" alt="${title}">
+          <div class="video-title">${title}</div>
+        `;
+        card.onclick = () => {
+          document.getElementById('player').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+          document.getElementById('player').style.display = "block";
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        resultsDiv.appendChild(card);
+      });
+    } catch (err) {
+      resultsDiv.innerHTML = `<p style="color:red;">Errore: ${err.message}</p>`;
+    }
+  }
+</script>
+
+</body>
+</html>
